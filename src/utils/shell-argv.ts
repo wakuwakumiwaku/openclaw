@@ -7,14 +7,16 @@ function isDoubleQuoteEscape(next: string | undefined): next is string {
 export function splitShellArgs(raw: string): string[] | null {
   const tokens: string[] = [];
   let buf = "";
+  let tokenStarted = false;
   let inSingle = false;
   let inDouble = false;
   let escaped = false;
 
   const pushToken = () => {
-    if (buf.length > 0) {
+    if (tokenStarted) {
       tokens.push(buf);
       buf = "";
+      tokenStarted = false;
     }
   };
 
@@ -26,6 +28,7 @@ export function splitShellArgs(raw: string): string[] | null {
       continue;
     }
     if (!inSingle && !inDouble && ch === "\\") {
+      tokenStarted = true;
       escaped = true;
       continue;
     }
@@ -52,10 +55,12 @@ export function splitShellArgs(raw: string): string[] | null {
       continue;
     }
     if (ch === "'") {
+      tokenStarted = true;
       inSingle = true;
       continue;
     }
     if (ch === '"') {
+      tokenStarted = true;
       inDouble = true;
       continue;
     }
@@ -63,6 +68,7 @@ export function splitShellArgs(raw: string): string[] | null {
       pushToken();
       continue;
     }
+    tokenStarted = true;
     buf += ch;
   }
 
