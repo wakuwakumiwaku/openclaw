@@ -8,7 +8,9 @@ export type BackoffPolicy = {
 };
 
 export function computeBackoff(policy: BackoffPolicy, attempt: number) {
-  const base = policy.initialMs * policy.factor ** Math.max(attempt - 1, 0);
+  // Cap before applying jitter: an overflowing exponent multiplied by zero
+  // jitter (or a zero random sample) produces NaN instead of the maximum delay.
+  const base = Math.min(policy.maxMs, policy.initialMs * policy.factor ** Math.max(attempt - 1, 0));
   const jitter = base * policy.jitter * Math.random();
   return Math.min(policy.maxMs, Math.round(base + jitter));
 }
